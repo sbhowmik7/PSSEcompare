@@ -139,18 +139,12 @@ def compare(comp_con, slurp_con):
 
 def get_except_nodes(slurp_con, params, unique_opt):
     # Get except nodes
-    # sql_new = """select node from slurpB
-    #         where  option='%%(unique_opt)s'
-    #     except
-    #     select node from slurpA
-    #         where option='%%(unique_opt)s'
     sql_exec = """SELECT s.node, s.type, s.option, s.value
                   FROM slurp%(keep_elems_case)s s
                   WHERE s.node NOT IN (
                     SELECT node FROM slurp%(except_case)s)
         """ % params
 
-    #sql_exec = sql_new % {'unique_opt': unique_opt}
     return slurp_con.execute(sql_exec)
 
 def add_added_elems_to_db(slurp_con, comp_con):
@@ -158,7 +152,6 @@ def add_added_elems_to_db(slurp_con, comp_con):
     TODO: Will need to add special code for subsystem peculiarities to be handled
     here.
     """
-
     params = {'keep_elems_case':'B', 'except_case':'A'}
 
     for e in elements.values():
@@ -166,14 +159,9 @@ def add_added_elems_to_db(slurp_con, comp_con):
         # will always be the same and present.)
         params['elem_name'] = e.elem_name
         nodes = get_except_nodes(slurp_con, params, e.writables.keys()[0])
-        # sql_insert = """INSERT INTO new
-        #                 select node, type, option, value
-        #                 from slurp
-        #                     where case_id='%(keep_elems_case)s'
-        #                         and type='%(elem_name)s'
-        #                         and node=?""" % params
         insert_new = "INSERT INTO new values (?, ?, ?, ?)"
         comp_con.executemany(insert_new, nodes)
+
     comp_con.commit()
 
 def add_removed_elems_to_db(slurp_con, comp_con):
@@ -188,18 +176,9 @@ def add_removed_elems_to_db(slurp_con, comp_con):
         # will always be the same and present.)
         nodes = get_except_nodes(slurp_con, params, e.writables.keys()[0])
         params['elem_name'] = e.elem_name
-        # if e.elem_name == 'fxshunt':
-        #     nodes = list(nodes)
-        # sql_insert = """INSERT INTO removed
-        #                 select node, type, option, value
-        #                 from slurp
-        #                     where
-        #                         case_id='%(keep_elems_case)s'
-        #                         and type='%(elem_name)s'
-        #                         and node=?""" % params
         sql_insert = "INSERT INTO removed values (?, ?, ?, ?)"
-
         comp_con.executemany(sql_insert, nodes)
+
     comp_con.commit()
 
 

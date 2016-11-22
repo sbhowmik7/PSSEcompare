@@ -108,10 +108,7 @@ if __name__ == "__main__":
         print str(e)
         usage()
         sys.exit(2)
-    # if len(opts) <2:
-    #     print "Error: Too few arguments"
-    #     usage()
-    #     sys.exit(2)
+
     for opt, arg in opts:
         if opt in ('-h', '--help'):
             usage()

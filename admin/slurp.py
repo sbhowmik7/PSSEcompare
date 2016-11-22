@@ -63,7 +63,6 @@ def slurp_single_case(filename,case_letter):
     Slurps a single case and initializes each element.
     Stores each row of data with unique keys in to the database
     """
-    #psspy.psseinit()
     if not os.path.isfile(filename):
         print "Could not find file %s" %(filename,)
         raise IOError
@@ -96,15 +95,12 @@ def slurp_single_case(filename,case_letter):
 
     for e in elements.values():
         param_cnt = slurp_element(e, case_letter, slurp_con)
-
         elem_cnt = param_cnt / len(e.writables)
 
         if elem_cnt == 1:
             read_msg = 'Read in %s %s element.' % (elem_cnt, e.elem_name)
         else:
             read_msg = 'Read in %s %s elements.' % (elem_cnt, e.elem_name)
-
-        # db_tools.insert_msg(read_msg)
 
     slurp_con.commit()
     slurp_con.close()
@@ -164,7 +160,7 @@ def try_import_caspy(filename):
     except:
         return False
 
-
+#This is the assumed pathway when the subprocess is called for CASPY usage
 if __name__ == "__main__":
     filename =sys.argv[1]
     try_import_caspy(filename)

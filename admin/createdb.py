@@ -60,8 +60,7 @@ removed_db_string = ("""CREATE TABLE removed (
         option TEXT NOT NULL,
         value TEXT)""")
 
-# Most of these data types refer to lists and thus will be stored as JSON
-# values.
+# Most of these data types refer to lists and thus will be stored as JSON values.
 subsys_opt_string = ("""CREATE TABLE subsys_opt (
         range_kv JSON,
         areas JSON,

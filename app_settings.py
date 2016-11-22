@@ -11,7 +11,6 @@ import platform
 
 # ====   directories
 APP_DIR = os.path.abspath(os.path.dirname(__file__))
-# SAV_DIR = os.path.join(APP_DIR, 'tmpsav')
 ADMIN_DIR = os.path.join(APP_DIR, 'admin')
 UTILS_DIR = os.path.join(APP_DIR, 'utils')
 META_DIR = os.path.join(APP_DIR, 'meta')
@@ -30,14 +29,6 @@ if 'Windows' in platform.platform():
 
 
 # ====   sqlite3 options
-# make sqlite convert columns marked as JSON into the corresponding python
-# datatype.
-#sqlite3.register_converter("JSON", json.loads)
-# make sqlite3 write dicts and lists to json for columns marked as JSON.
-#sqlite3.register_adapter(type(dict()), json.dumps)
-#sqlite3.register_adapter(type(list()), json.dumps)
-# pass this to the `detect_types` argument of sqlite3.connect to get access
-# to the JSON functions.
 detect_types_arg = sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES
 
 # ====   db options

@@ -74,19 +74,6 @@ def make_python(fid_out,origfile):
 
 def write_py_main(fid_out,origfile):
     """Write the function to be executed when the python file is executed."""
-    #
-    # job_db = sqlite3.connect(app_settings.DB_FILE)
-    #
-    # results = job_db.execute("""SELECT A.case_fname, B.case_fname
-    #                             FROM jobs A
-    #                             INNER JOIN jobs B ON
-    #                               A.case_letter='A'
-    #                               AND B.case_letter='B'
-    #                             """)
-    #
-    # fnames = results.fetchall()[0]
-    # results.close()
-    # job_db.close()
 
     fid_out.write(textwrap.dedent("""\
             def main():
