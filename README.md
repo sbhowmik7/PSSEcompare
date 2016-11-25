@@ -11,10 +11,10 @@ PSS®E 33.0 to PSS®E 33.8 had a bad "caspy.Savefile()" module which was leading
 
 <b>USAGE:</b>
 the main file is <i> runPSSECompare.py</i>. Modify this to change the default inputs to or use the command line version
-python -m runPSSEcompare -o {Originalfile} -c {File2compare} -x[WriteoutExcelFile]
+> python -m runPSSEcompare -o {Originalfile} -c {File2compare} -x[WriteoutExcelFile]
 
 <b>MODIFICATION:</b>
-Use app_settings.py to change some of the paths as well as some of the settings
+Use *app_settings.py* to change some of the paths as well as some of the settings
 
 <b>NOTES:</b>
 Uses subprocess (with caspy) in case caspy causes python to crash. If so it tries to use psspy modules
