@@ -36,4 +36,4 @@ pssepath
 <b>TESTED:</b>
 Tested on Windows with PSS®E 33/32/31 and their respective python versions (2.7,2.5)
 
-<i>email: sbhowmik at rocketmail dot com</i>
+__email:__ *sbhowmik at rocketmail dot com*
