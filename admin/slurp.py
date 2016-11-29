@@ -70,11 +70,12 @@ def slurp_single_case(filename,case_letter):
 
 
     if 'sav' in fext:
-        if not app_settings.USE_CASPY and run_in_python('slurp.py',filename):
+        if app_settings.USE_CASPY and run_in_python('slurp.py',filename):
             # test to see if we can use CASPY or it crashes in a subprocess
             import caspy
             import psse_utils as utils
             case = caspy.Savecase(filename)
+            assert case.pssopn['IERR'] is 0,'Error using caspy to read in %s: Check savecase version!!' %filename
             utils.fix_caspy_case(case)
         else:
             app_settings.USE_CASPY =False
@@ -98,9 +99,9 @@ def slurp_single_case(filename,case_letter):
         elem_cnt = param_cnt / len(e.writables)
 
         if elem_cnt == 1:
-            read_msg = 'Read in %s %s element.' % (elem_cnt, e.elem_name)
+            print 'Read in %s %s element.' % (elem_cnt, e.elem_name)
         else:
-            read_msg = 'Read in %s %s elements.' % (elem_cnt, e.elem_name)
+            print 'Read in %s %s elements.' % (elem_cnt, e.elem_name)
 
     slurp_con.commit()
     slurp_con.close()

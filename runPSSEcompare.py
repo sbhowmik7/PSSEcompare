@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 """
 runPSSEcompare: Main file that initiates the comparison of 2 PSSE case/raw files Can be used in command line mode
 """
@@ -55,7 +54,7 @@ def createdb_if_absent():
             os.remove(app_settings.COMPARE_DB)
     except OSError:
         _, err, _ = sys.exc_info()
-        print("OS error: {0}".format(err))
+        print("OS error: ", str(err))
         raise
     createdb.createdb()
 
@@ -104,8 +103,9 @@ if __name__ == "__main__":
     try:
         opts, args = getopt.getopt(sys.argv[1:], "o:c:hxp",
                                    ["orgfile=", "cmpfile="])
-    except getopt.GetoptError as e:
-        print str(e)
+    except getopt.GetoptError:
+        _, err, _ = sys.exc_info()
+        print str(err)
         usage()
         sys.exit(2)
 

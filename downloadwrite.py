@@ -1,5 +1,5 @@
-"""downloadwrite: Creates he output reports of the comparison
-Can wirite the outpus in python files (whihc can be used in psse to create the new from the original.
+"""downloadwrite: Creates the output reports of the comparison
+Can write the outputs in python files (which can be used in psse to create the new from the original.
 Else the output can be in Excel/Csv format
 """
 __author__ = "Sudipto Bhowmik, whit.com.au"
@@ -363,9 +363,11 @@ def construct_data_format_fn(e, action):
             See the construct_data_format_fn docstring for more info."""
             node_vals = get_vals_from_node(node)
             node_vals = tuple([f(x) for f, x in zip(type_conv, node_vals)])
-
-            opt_and_vals = (e.writables[option].read_param, '',
-                type_fn_dict[e.writables[option].data_type](value))
+            try:
+                opt_and_vals = (e.writables[option].read_param, '',
+                    type_fn_dict[e.writables[option].data_type](value))
+            except TypeError:
+                opt_and_vals = (e.writables[option].read_param, '','')
 
             return node_vals + opt_and_vals
 
