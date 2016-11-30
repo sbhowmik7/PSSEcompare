@@ -1,7 +1,9 @@
 # PSSEcompare
 <b>DESCRIPTION:</b>
 Compares PSS®E sav or raw files using python and output difference in excel or py files.This is the commandline version 
-based on [Gridcompare] (http://www.whit.com.au/gridcompare/) with the added fuctionality to include raw files as inputs to be compared.
+based on [Gridcompare] (http://www.whit.com.au/gridcompare/) with the added fuctionality to include raw files as inputs.
+
+*Please see the pyV27 branch for the PSS®E 33 specific version which uses a much faster version of xlsxwriter and does not have memory issues for really large differential files*
 
 <b>HISTORY:</b> 
 While trying to compare various PSS®E files I found that Gridcompare kept crashing and it was getting to be a pain
