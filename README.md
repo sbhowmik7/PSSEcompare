@@ -24,8 +24,6 @@ On really large files like the eastern interconnect (>60K buses) it takes a real
 
 <b>USES:</b> 
 Public modules/library:
-* certifi
-* chardet
 * openpyxl
 * orderdict
 
