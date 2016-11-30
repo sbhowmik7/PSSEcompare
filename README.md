@@ -1,7 +1,8 @@
-# PSSEcompare
+# PSSEcompare for Python v2.7+
 <b>DESCRIPTION:</b>
 Compares PSS®E sav or raw files (v33+ or higher) using python and output the difference in excel or py files.This is the commandline version 
-based on [Gridcompare] (http://www.whit.com.au/gridcompare/) with the added fuctionality to include raw files as inputs to be compared.
+based on [Gridcompare] (http://www.whit.com.au/gridcompare/) with the added fuctionality to include raw files as inputs.
+Created to exploit better Excel writing tools in v2.7
 
 <b>HISTORY:</b> 
 While trying to compare various PSS®E files I found that Gridcompare kept crashing and it was getting to be a pain
@@ -20,7 +21,7 @@ Use *app_settings.py* to change some of the paths as well as some of the setting
 Uses subprocess (with caspy) in case caspy causes python to crash. If so it tries to use psspy modules
 to access the data within the input files. Use of caspy can be done with just PSSE installed and does not 
 require a dongle to work which is advantageous if one has an hourly license.
-On really large files like the eastern interconnect (>60K buses) it takes a really large time and might crash due to size constraint on the sqlite databases.
+On really large files like the eastern interconnect (>60K buses) it takes a really large time. Most memory problems solved by using python 2.7+ libraries
 
 <b>USES:</b> 
 Public modules/library:
@@ -31,7 +32,7 @@ pssepath
 
 
 <b>TESTED:</b>
-Tested on Windows with PSS®E 33 and their respective python versions (2.7+)
+Tested on Windows with PSS®E 33 and python 2.7+
 
 **SUPPORT**
 
