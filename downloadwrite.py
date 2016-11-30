@@ -392,7 +392,7 @@ def construct_data_format_fn(e, action):
 
 def make_excel(filename):
     """Write an excel spreadsheet to fid."""
-    wb = openpyxl.Workbook()
+    wb = openpyxl.Workbook(write_only=True)
 
     con = sqlite3.connect(app_settings.COMPARE_DB)
     con.text_factory = str

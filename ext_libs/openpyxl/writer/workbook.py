@@ -1,219 +1,164 @@
-# file openpyxl/writer/workbook.py
-
-# Copyright (c) 2010-2011 openpyxl
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
-#
-# @license: http://www.opensource.org/licenses/mit-license.php
-# @author: see AUTHORS file
+from __future__ import absolute_import
+# Copyright (c) 2010-2016 openpyxl
 
 """Write the workbook global settings to the archive."""
 
-# package imports
-from openpyxl.shared.xmltools import Element, SubElement
-from openpyxl.cell import absolute_coordinate
-from openpyxl.shared.xmltools import get_document_content
-from openpyxl.shared.ooxml import NAMESPACES, ARC_CORE, ARC_WORKBOOK, \
-       ARC_APP, ARC_THEME, ARC_STYLE, ARC_SHARED_STRINGS
-from openpyxl.shared.date_time import datetime_to_W3CDTF
-from openpyxl.namedrange import NamedRange, NamedRangeContainingValue
+from copy import copy
 
+from openpyxl.utils import absolute_coordinate, quote_sheetname
+from openpyxl.xml.constants import (
+    ARC_APP,
+    ARC_CORE,
+    ARC_WORKBOOK,
+    PKG_REL_NS,
+    CUSTOMUI_NS,
+    ARC_ROOT_RELS,
+)
+from openpyxl.xml.functions import tostring, fromstring
 
-def write_properties_core(properties):
-    """Write the core properties to xml."""
-    root = Element('cp:coreProperties', {'xmlns:cp': NAMESPACES['cp'],
-            'xmlns:xsi': NAMESPACES['xsi'], 'xmlns:dc': NAMESPACES['dc'],
-            'xmlns:dcterms': NAMESPACES['dcterms'],
-            'xmlns:dcmitype': NAMESPACES['dcmitype'], })
-    SubElement(root, 'dc:creator').text = properties.creator
-    SubElement(root, 'cp:lastModifiedBy').text = properties.last_modified_by
-    SubElement(root, 'dcterms:created', \
-            {'xsi:type': 'dcterms:W3CDTF'}).text = \
-            datetime_to_W3CDTF(properties.created)
-    SubElement(root, 'dcterms:modified',
-            {'xsi:type': 'dcterms:W3CDTF'}).text = \
-            datetime_to_W3CDTF(properties.modified)
-    return get_document_content(root)
-
-
-def write_content_types(workbook):
-    """Write the content-types xml."""
-    root = Element('Types', {'xmlns': 'http://schemas.openxmlformats.org/package/2006/content-types'})
-    SubElement(root, 'Override', {'PartName': '/' + ARC_THEME, 'ContentType': 'application/vnd.openxmlformats-officedocument.theme+xml'})
-    SubElement(root, 'Override', {'PartName': '/' + ARC_STYLE, 'ContentType': 'application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml'})
-    SubElement(root, 'Default', {'Extension': 'rels', 'ContentType': 'application/vnd.openxmlformats-package.relationships+xml'})
-    SubElement(root, 'Default', {'Extension': 'xml', 'ContentType': 'application/xml'})
-    SubElement(root, 'Override', {'PartName': '/' + ARC_WORKBOOK, 'ContentType': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml'})
-    SubElement(root, 'Override', {'PartName': '/' + ARC_APP, 'ContentType': 'application/vnd.openxmlformats-officedocument.extended-properties+xml'})
-    SubElement(root, 'Override', {'PartName': '/' + ARC_CORE, 'ContentType': 'application/vnd.openxmlformats-package.core-properties+xml'})
-    SubElement(root, 'Override', {'PartName': '/' + ARC_SHARED_STRINGS, 'ContentType': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml'})
-
-    drawing_id = 1
-    chart_id = 1
-
-    for sheet_id, sheet in enumerate(workbook.worksheets):
-        SubElement(root, 'Override',
-                {'PartName': '/xl/worksheets/sheet%d.xml' % (sheet_id + 1),
-                'ContentType': 'application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml'})
-        if sheet._charts:
-            SubElement(root, 'Override',
-                {'PartName' : '/xl/drawings/drawing%d.xml' % drawing_id,
-                'ContentType' : 'application/vnd.openxmlformats-officedocument.drawing+xml'})
-            drawing_id += 1
-
-            for chart in sheet._charts:
-                SubElement(root, 'Override',
-                    {'PartName' : '/xl/charts/chart%d.xml' % chart_id,
-                    'ContentType' : 'application/vnd.openxmlformats-officedocument.drawingml.chart+xml'})
-                chart_id += 1
-                if chart._shapes:
-                    SubElement(root, 'Override',
-                        {'PartName' : '/xl/drawings/drawing%d.xml' % drawing_id,
-                        'ContentType' : 'application/vnd.openxmlformats-officedocument.drawingml.chartshapes+xml'})
-                    drawing_id += 1
-
-    return get_document_content(root)
-
-
-def write_properties_app(workbook):
-    """Write the properties xml."""
-    worksheets_count = len(workbook.worksheets)
-    root = Element('Properties', {'xmlns': 'http://schemas.openxmlformats.org/officeDocument/2006/extended-properties',
-            'xmlns:vt': 'http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes'})
-    SubElement(root, 'Application').text = 'Microsoft Excel'
-    SubElement(root, 'DocSecurity').text = '0'
-    SubElement(root, 'ScaleCrop').text = 'false'
-    SubElement(root, 'Company')
-    SubElement(root, 'LinksUpToDate').text = 'false'
-    SubElement(root, 'SharedDoc').text = 'false'
-    SubElement(root, 'HyperlinksChanged').text = 'false'
-    SubElement(root, 'AppVersion').text = '12.0000'
-
-    # heading pairs part
-    heading_pairs = SubElement(root, 'HeadingPairs')
-    vector = SubElement(heading_pairs, 'vt:vector',
-            {'size': '2', 'baseType': 'variant'})
-    variant = SubElement(vector, 'vt:variant')
-    SubElement(variant, 'vt:lpstr').text = 'Worksheets'
-    variant = SubElement(vector, 'vt:variant')
-    SubElement(variant, 'vt:i4').text = '%d' % worksheets_count
-
-    # title of parts
-    title_of_parts = SubElement(root, 'TitlesOfParts')
-    vector = SubElement(title_of_parts, 'vt:vector',
-            {'size': '%d' % worksheets_count, 'baseType': 'lpstr'})
-    for ws in workbook.worksheets:
-        SubElement(vector, 'vt:lpstr').text = '%s' % ws.title
-    return get_document_content(root)
+from openpyxl.worksheet import Worksheet
+from openpyxl.chartsheet import Chartsheet
+from openpyxl.packaging.relationship import Relationship, RelationshipList
+from openpyxl.workbook.defined_name import DefinedName
+from openpyxl.workbook.external_reference import ExternalReference
+from openpyxl.workbook.parser import ChildSheet, WorkbookPackage
+from openpyxl.workbook.properties import CalcProperties, WorkbookProperties
+from openpyxl.workbook.views import BookView
+from openpyxl.utils.datetime import CALENDAR_MAC_1904
 
 
 def write_root_rels(workbook):
     """Write the relationships xml."""
-    root = Element('Relationships', {'xmlns':
-            'http://schemas.openxmlformats.org/package/2006/relationships'})
-    SubElement(root, 'Relationship', {'Id': 'rId1', 'Target': ARC_WORKBOOK,
-            'Type': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument'})
-    SubElement(root, 'Relationship', {'Id': 'rId2', 'Target': ARC_CORE,
-            'Type': 'http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties'})
-    SubElement(root, 'Relationship', {'Id': 'rId3', 'Target': ARC_APP,
-            'Type': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties'})
-    return get_document_content(root)
+
+    rels = RelationshipList()
+
+    rel = Relationship(type="officeDocument", Target=ARC_WORKBOOK)
+    rels.append(rel)
+
+    rel = Relationship(Target=ARC_CORE, Type="%s/metadata/core-properties" % PKG_REL_NS)
+    rels.append(rel)
+
+    rel = Relationship(type="extended-properties", Target=ARC_APP)
+    rels.append(rel)
+
+    if workbook.vba_archive is not None:
+        # See if there was a customUI relation and reuse it
+        xml = fromstring(workbook.vba_archive.read(ARC_ROOT_RELS))
+        root_rels = RelationshipList.from_tree(xml)
+        for rel in root_rels.find(CUSTOMUI_NS):
+            rels.append(rel)
+
+    return tostring(rels.to_tree())
+
+
+def get_active_sheet(wb):
+    """
+    Return the index of the active sheet.
+    If the sheet set to active is hidden return the next visible sheet
+    """
+    idx = wb._active_sheet_index
+    sheet = wb.active
+    if sheet.sheet_state == "visible":
+        return idx
+
+    for idx, sheet in enumerate(wb._sheets[idx:], idx):
+        if sheet.sheet_state == "visible":
+            wb.active = idx
+            return idx
+
+    raise IndexError("At least one sheet must be visible")
 
 
 def write_workbook(workbook):
     """Write the core workbook xml."""
-    root = Element('workbook', {'xmlns': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main',
-            'xml:space': 'preserve', 'xmlns:r': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'})
-    SubElement(root, 'fileVersion', {'appName': 'xl', 'lastEdited': '4',
-            'lowestEdited': '4', 'rupBuild': '4505'})
-    SubElement(root, 'workbookPr', {'defaultThemeVersion': '124226',
-            'codeName': 'ThisWorkbook'})
-    book_views = SubElement(root, 'bookViews')
-    SubElement(book_views, 'workbookView', {'activeTab': '%d' % workbook.get_index(workbook.get_active_sheet()),
-            'autoFilterDateGrouping': '1', 'firstSheet': '0', 'minimized': '0',
-            'showHorizontalScroll': '1', 'showSheetTabs': '1',
-            'showVerticalScroll': '1', 'tabRatio': '600',
-            'visibility': 'visible'})
+
+    wb = workbook
+    wb.rels = RelationshipList()
+
+    root = WorkbookPackage()
+
+    props = WorkbookProperties() # needs a mapping to the workbook for preservation
+    if wb.code_name is not None:
+        props.codeName = wb.code_name
+    if wb.excel_base_date == CALENDAR_MAC_1904:
+        props.date1904 = True
+    root.workbookPr = props
+
+    # book views
+    active = get_active_sheet(wb)
+    view = BookView(activeTab=active)
+    root.bookViews =[view]
+
     # worksheets
-    sheets = SubElement(root, 'sheets')
-    for i, sheet in enumerate(workbook.worksheets):
-        sheet_node = SubElement(sheets, 'sheet', {'name': sheet.title,
-                'sheetId': '%d' % (i + 1), 'r:id': 'rId%d' % (i + 1)})
-        if not sheet.sheet_state == sheet.SHEETSTATE_VISIBLE:
-            sheet_node.set('state', sheet.sheet_state)
+    for idx, sheet in enumerate(wb._sheets, 1):
+        sheet_node = ChildSheet(name=sheet.title, sheetId=idx, id="rId{0}".format(idx))
+        rel = Relationship(type=sheet._rel_type, Target=sheet.path)
+        wb.rels.append(rel)
+
+        if not sheet.sheet_state == 'visible':
+            if len(wb._sheets) == 1:
+                raise ValueError("The only worksheet of a workbook cannot be hidden")
+            sheet_node.state = sheet.sheet_state
+        root.sheets.append(sheet_node)
+
+    # external references
+    for link in wb._external_links:
+        # need to match a counter with a workbook's relations
+        rId = len(wb.rels) + 1
+        rel = Relationship(type=link._rel_type, Target=link.path)
+        wb.rels.append(rel)
+        ext = ExternalReference(id=rel.id)
+        root.externalReferences.append(ext)
 
     # Defined names
-    defined_names = SubElement(root, 'definedNames')
-    # named ranges
-    for named_range in workbook.get_named_ranges():
-        name = SubElement(defined_names, 'definedName',
-                {'name': named_range.name})
-        if named_range.scope:
-            name.set('localSheetId', '%s' % workbook.get_index(named_range.scope))
+    defined_names = copy(wb.defined_names) # don't add special defns to workbook itself.
 
-        if isinstance(named_range, NamedRange):
-            # as there can be many cells in one range, generate the list of ranges
-            dest_cells = []
-            for worksheet, range_name in named_range.destinations:
-                dest_cells.append("'%s'!%s" % (worksheet.title.replace("'", "''"),
-                absolute_coordinate(range_name)))
+    # Defined names -> autoFilter
+    for idx, sheet in enumerate(wb.worksheets):
+        auto_filter = sheet.auto_filter.ref
+        if auto_filter:
+            name = DefinedName(name='_FilterDatabase', localSheetId=idx, hidden=True)
+            name.value = u"{0}!{1}".format(quote_sheetname(sheet.title),
+                                          absolute_coordinate(auto_filter)
+                                          )
+            defined_names.append(name)
 
-            # finally write the cells list
-            name.text = ','.join(dest_cells)
-        else:
-            assert isinstance(named_range, NamedRangeContainingValue)
-            name.text = named_range.value
+        # print titles
+        if sheet.print_titles:
+            name = DefinedName(name="Print_Titles", localSheetId=idx)
+            name.value = quote_sheetname(sheet.print_titles)
+            defined_names.append(name)
 
-    # autoFilter
-    for i, sheet in enumerate(workbook.worksheets):
-        #continue
-        auto_filter = sheet.auto_filter
-        if not auto_filter:
-            continue
-        name = SubElement(defined_names, 'definedName',
-                dict(name='_xlnm._FilterDatabase',
-                     localSheetId=str(i),
-                     hidden='1'))
-        name.text = "'%s'!%s" % (sheet.title.replace("'", "''"),
-                                  absolute_coordinate(auto_filter))
+        # print areas
+        if sheet.print_area:
+            name = DefinedName(name="Print_Area", localSheetId=idx)
+            name.value = ",".join([u"{0}!{1}".format(quote_sheetname(sheet.title), r)
+                                  for r in sheet.print_area])
+            defined_names.append(name)
 
-    SubElement(root, 'calcPr', {'calcId': '124519', 'calcMode': 'auto',
-            'fullCalcOnLoad': '1'})
-    return get_document_content(root)
+    root.definedNames = defined_names
+
+    root.calcPr = CalcProperties(calcId=124519, fullCalcOnLoad=True)
+
+    return tostring(root.to_tree())
 
 
 def write_workbook_rels(workbook):
     """Write the workbook relationships xml."""
-    root = Element('Relationships', {'xmlns':
-            'http://schemas.openxmlformats.org/package/2006/relationships'})
-    for i in range(len(workbook.worksheets)):
-        SubElement(root, 'Relationship', {'Id': 'rId%d' % (i + 1),
-                'Type': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet',
-                'Target': 'worksheets/sheet%s.xml' % (i + 1)})
-    rid = len(workbook.worksheets) + 1
-    SubElement(root, 'Relationship',
-            {'Id': 'rId%d' % rid, 'Target': 'sharedStrings.xml',
-            'Type': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings'})
-    SubElement(root, 'Relationship',
-            {'Id': 'rId%d' % (rid + 1), 'Target': 'styles.xml',
-            'Type': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles'})
-    SubElement(root, 'Relationship',
-            {'Id': 'rId%d' % (rid + 2), 'Target': 'theme/theme1.xml',
-            'Type': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme'})
-    return get_document_content(root)
+    wb = workbook
+
+    strings =  Relationship(type='sharedStrings', Target='sharedStrings.xml')
+    wb.rels.append(strings)
+
+    styles =  Relationship(type='styles', Target='styles.xml')
+    wb.rels.append(styles)
+
+    theme =  Relationship(type='theme', Target='theme/theme1.xml')
+    wb.rels.append(theme)
+
+    if workbook.vba_archive:
+        vba =  Relationship(type='', Target='vbaProject.bin')
+        vba.Type ='http://schemas.microsoft.com/office/2006/relationships/vbaProject'
+        wb.rels.append(vba)
+
+    return tostring(wb.rels.to_tree())

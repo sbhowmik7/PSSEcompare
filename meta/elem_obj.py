@@ -18,7 +18,7 @@ except ImportError:
     import app_settings
 
 # import Grid Compare modules.
-from ordereddict import OrderedDict
+from collections import OrderedDict
 from psse_utils import caspy_info
 
 try:
