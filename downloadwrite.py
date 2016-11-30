@@ -245,64 +245,33 @@ def changed_lines(changes, indent=''):
     return lines
 
 
-def make_csv(fid):
-    """Write out a csv file of all the changes."""
-    writer = csv.writer(fid)
+# ============== Excel Writer ===================================================================================
 
-    con = sqlite3.connect(app_settings.COMPARE_DB)
-    con.text_factory = str
-
-    # --- Write removed data
-    del_sql = """SELECT node, type, option, value
-                    FROM removed"""
-
-    # change option to a more readable name.
-    rows = [(node, elem_type,
-        elements[elem_type].writables[option].read_param,
-        value.strip(),'')
-        for node, elem_type, option, value in con.execute(del_sql)]
-
-    writer.writerows(rows)
-
-    # --- Write new data
-    new_sql = """SELECT node, type, option, value
-                    FROM new"""
-    # change option to a more readable name.
-    rows = [(node, elem_type,
-        elements[elem_type].writables[option].read_param,
-        '', value.strip())
-        for node, elem_type, option, value in con.execute(new_sql)]
-
-    writer.writerows(rows)
-
-    # --- Write changed data
-    comp_sql = """SELECT node, type, option, before, after
-                    FROM compare"""
-    # change option to a more readable name.
-    rows = [(node, elem_type,
-        elements[elem_type].writables[option].read_param,
-        before.strip(), after.strip())
-        for node, elem_type, option, before, after in con.execute(comp_sql)]
-
-    writer.writerows(rows)
-
-# ============== Excel Writer ============
-
-def excel_write_rows(sheet, data_rows,currow =0):
-    """Writes the data stored in 'data_rows' to an excel spreadsheet 'sheet'.
+def excel_write_rows(sheet, data_rows, elm, formats,currow =0):
+    """Writes the data stored in 'data_rows' to Excel and returns number of rows
+        written. Colors groups of data by formats
     """
-    rwcnt =0
+    pri_cnt=len(elm.write_fns.values()[0].primaries.keys()) #get number of prikey fields
+    rwcnt = frm =0
+    storec= tuple()
+    togfrm = lambda x: (1,0)[x]
+
     for rwcnt,row in enumerate(data_rows,start=1):
-        sheet.write_row(currow+rwcnt-1,0,row)
+        newrec=row[:pri_cnt]
+        if not(newrec == storec): #If new record group toggle format for cells
+            frm =togfrm(frm)
+
+        sheet.write_row(currow+rwcnt-1,0,row,formats[frm])
+        storec=newrec
+
     return rwcnt
 
-def write_excel_sheet_header(sheet, e, currow =0):
-    """Returns a tuple with the names to be used as the column headers."""
+def write_excel_sheet_header(sheet, e, format):
+    """Writes the Header /Title of the columns"""
     a_write_fn = e.write_fns.values()[0]
     headers = a_write_fn.primaries.keys()
-
-    headers += ('option', 'case A', 'case B')
-    sheet.write_row(currow,0,headers)
+    headers += ('Option', 'case A', 'case B')
+    sheet.write_row(0,0,headers,format)
 
 def construct_data_format_fn(e, action):
     """Returns a function for converting a row from the database into a row to
@@ -383,8 +352,6 @@ def construct_data_format_fn(e, action):
 
 def make_excel(filename):
     """Write an excel spreadsheet to fid."""
-    wb = xlsxwriter.Workbook(filename)
-
     con = sqlite3.connect(app_settings.COMPARE_DB)
     con.text_factory = str
 
@@ -402,8 +369,10 @@ def make_excel(filename):
             'tr3':'3 Trn',
             'wnd':'3 Trn Windings'}
 
-    type_conv = {'int':int, 'real':float, 'char': lambda x: x.decode('latin1')}
+    #type_conv = {'int':int, 'real':float, 'char': lambda x: x.decode('latin1')}
     sheets = {}
+    wb = xlsxwriter.Workbook(filename)
+
     for elem_name in sheetorder:
         sheet_name = elem_to_sheet_name[elem_name]
         e = elements[elem_name]
@@ -434,24 +403,27 @@ def make_excel(filename):
             e_sheet = wb.add_worksheet(sheet_name)
             sheets[sheet_name] = e_sheet
 
-
-            # write the headers on the 0th line.
-            write_excel_sheet_header(e_sheet, e)
+            # write the header.
+            bold=wb.add_format({'bold': True})
+            write_excel_sheet_header(e_sheet, e,bold)
             rwcnt = 1
+
+            formats =[wb.add_format({'bg_color': '#FFFFCC',}),
+                      wb.add_format({'bg_color': '#E5FFCC', })]
             # --- Write removed data
             del_rows = starmap(construct_data_format_fn(e,'removed'),
                     con.execute(del_sql))
-            rwcnt += excel_write_rows(e_sheet, del_rows,rwcnt)
+            rwcnt += excel_write_rows(e_sheet, del_rows,e,formats,rwcnt)
 
             # --- Write added data
             new_rows = starmap(construct_data_format_fn(e,'added'),
                     con.execute(new_sql))
-            rwcnt += excel_write_rows(e_sheet, new_rows,rwcnt)
+            rwcnt += excel_write_rows(e_sheet, new_rows,e,formats,rwcnt)
 
             # --- Write changed data
             comp_rows = starmap(construct_data_format_fn(e,'changed'),
                     con.execute(comp_sql))
-            rwcnt += excel_write_rows(e_sheet, comp_rows,rwcnt)
+            rwcnt += excel_write_rows(e_sheet, comp_rows,e,formats,rwcnt)
 
     if not sheets:
         # there are no changes between the 2 files.
@@ -462,7 +434,46 @@ def make_excel(filename):
         for i,network_type in enumerate(sheetorder):
             sheet.write_row(2+i,0,elem_to_sheet_name[network_type])
 
-    # Remove the default sheet created with the workbook.
-    #wb.remove_sheet(wb.worksheets[0])
     wb.close()
     return True
+
+# def make_csv(fid):
+#     """Write out a csv file of all the changes."""
+#     writer = csv.writer(fid)
+#
+#     con = sqlite3.connect(app_settings.COMPARE_DB)
+#     con.text_factory = str
+#
+#     # --- Write removed data
+#     del_sql = """SELECT node, type, option, value
+#                     FROM removed"""
+#
+#     # change option to a more readable name.
+#     rows = [(node, elem_type,
+#         elements[elem_type].writables[option].read_param,
+#         value.strip(),'')
+#         for node, elem_type, option, value in con.execute(del_sql)]
+#
+#     writer.writerows(rows)
+#
+#     # --- Write new data
+#     new_sql = """SELECT node, type, option, value
+#                     FROM new"""
+#     # change option to a more readable name.
+#     rows = [(node, elem_type,
+#         elements[elem_type].writables[option].read_param,
+#         '', value.strip())
+#         for node, elem_type, option, value in con.execute(new_sql)]
+#
+#     writer.writerows(rows)
+#
+#     # --- Write changed data
+#     comp_sql = """SELECT node, type, option, before, after
+#                     FROM compare"""
+#     # change option to a more readable name.
+#     rows = [(node, elem_type,
+#         elements[elem_type].writables[option].read_param,
+#         before.strip(), after.strip())
+#         for node, elem_type, option, before, after in con.execute(comp_sql)]
+#
+#     writer.writerows(rows)

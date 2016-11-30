@@ -23,7 +23,7 @@ except ImportError:
 
 # import Grid Compare modules.
 import createdb
-from downloadwrite import make_python, make_csv, make_excel
+from downloadwrite import make_python, make_excel
 from slurp import slurp
 from compare import do_compare
 
@@ -95,7 +95,7 @@ def usage():
 import getopt
 
 if __name__ == "__main__":
-    ifileA = os.path.join(app_settings.APP_DIR, 'savnw.sav')
+    ifileA = os.path.join(app_settings.APP_DIR, 'sample.sav')
     ifileB = os.path.join(app_settings.APP_DIR, 'savcnv.sav')
     write_py = True
     write_excel = True
