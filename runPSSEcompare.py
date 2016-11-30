@@ -2,7 +2,6 @@
 """
 runPSSEcompare: Main file that initiates the comparison of 2 PSSE case/raw files Can be used in command line mode
 """
-from __future__ import with_statement
 __author__ = "Sudipto Bhowmik, whit.com.au"
 __license__ = "GPL"
 __version__ = "1.0.0"
@@ -52,8 +51,7 @@ def createdb_if_absent():
             os.remove(app_settings.SLURP_DB)
         if os.path.isfile(app_settings.COMPARE_DB):
             os.remove(app_settings.COMPARE_DB)
-    except OSError:
-        _, err, _ = sys.exc_info()
+    except OSError as err:
         print("OS error: ", str(err))
         raise
     createdb.createdb()
@@ -104,8 +102,7 @@ if __name__ == "__main__":
     try:
         opts, args = getopt.getopt(sys.argv[1:], "o:c:hxp",
                                    ["orgfile=", "cmpfile="])
-    except getopt.GetoptError:
-        _, err, _ = sys.exc_info()
+    except getopt.GetoptError as err:
         print str(err)
         usage()
         sys.exit(2)

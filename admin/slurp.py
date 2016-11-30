@@ -1,7 +1,6 @@
 """slurp: Reads in the PSSE data case (either sav or raw case) using PSSE API functions for reading
 Each elements real, char,integer and complex fields
 """
-from __future__ import with_statement
 __author__ = "Sudipto Bhowmik,whit.com.au"
 __license__ = "GPL"
 __version__ = "1.0.0"
@@ -129,9 +128,8 @@ def slurp(filename,case_letter = None):
     if case_letter:
         try:
             slurp_single_case(filename,case_letter)
-        except :
-            _, e, _ = sys.exc_info()
-            print('File read Error: ' + str(e))
+        except err:
+            print('File read Error: ' + str(err))
             raise
 
         print("Slurp Finished for case " + case_letter )

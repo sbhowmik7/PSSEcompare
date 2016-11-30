@@ -109,7 +109,7 @@ def write_py_header(fid_out):
         # Try to import psspy
         try:
             import psspy
-        except ImportError, e:
+        except ImportError as e:
             # If we couldn't load psspy out of the box, lets look for
             # pssepath, a module designed to facilitate importing psspy. The
             # quickest way of getting this to work is to place the 'pssepath'
