@@ -74,6 +74,7 @@ def flush_tables(remove_slurp=True):
 
 def downloadpy(fname,origfile):
     filename = fname
+    print "\nWriting python file %s" %fname
     with open(filename,'wb') as buff:
         make_python(buff,origfile)
     print("Done writing python file")
@@ -85,8 +86,8 @@ def downloadcsv(fname):
     print("Done writing csv file")
 
 def downloadxl(fname):
-    filename = fname
-    make_excel(filename)
+    print "\nWriting Excel file %s" % fname
+    make_excel(fname)
     print("Done writing excel file")
 
 def usage():

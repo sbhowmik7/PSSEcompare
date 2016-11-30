@@ -67,7 +67,7 @@ def slurp_single_case(filename,case_letter):
         print "Could not find file %s" %(filename,)
         raise IOError
     fnam,fext = os.path.splitext(filename)
-
+    print '\nReading %s' %filename
 
     if 'sav' in fext:
         if app_settings.USE_CASPY and run_in_python('slurp.py',filename):

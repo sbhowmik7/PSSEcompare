@@ -195,7 +195,7 @@ def do_compare():
     comp_con.execute("DELETE from removed")
     comp_con.commit()
 
-    print "Starting comparison between the 2 files"
+    print "\nStarting comparison between the 2 files"
 
     try:
         compare(comp_con, slurp_con)
