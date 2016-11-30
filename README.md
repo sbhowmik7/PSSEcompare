@@ -1,6 +1,6 @@
 # PSSEcompare
 <b>DESCRIPTION:</b>
-Compares PSS®E sav or raw files using python and output difference in excel or py files.This is the commandline version 
+Compares PSS®E sav or raw files (v33+ or higher) using python and output the difference in excel or py files.This is the commandline version 
 based on [Gridcompare] (http://www.whit.com.au/gridcompare/) with the added fuctionality to include raw files as inputs to be compared.
 
 <b>HISTORY:</b> 
@@ -24,9 +24,7 @@ On really large files like the eastern interconnect (>60K buses) it takes a real
 
 <b>USES:</b> 
 Public modules/library:
-* certifi
-* chardet
-* openpyxl
+* jdcal
 * orderdict
 
 <b>Other:</b>
@@ -34,6 +32,6 @@ pssepath
 
 
 <b>TESTED:</b>
-Tested on Windows with PSS®E 33/32/31 and their respective python versions (2.7,2.5)
+Tested on Windows with PSS®E 33 and their respective python versions (2.7+)
 
 __email:__ *sbhowmik at rocketmail dot com*
