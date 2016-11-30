@@ -24,8 +24,7 @@ On really large files like the eastern interconnect (>60K buses) it takes a real
 
 <b>USES:</b> 
 Public modules/library:
-* jdcal
-* orderdict
+* xlsxwriter
 
 <b>Other:</b>
 pssepath
@@ -33,5 +32,7 @@ pssepath
 
 <b>TESTED:</b>
 Tested on Windows with PSS®E 33 and their respective python versions (2.7+)
+
+**SUPPORT**
 
 __email:__ *sbhowmik at rocketmail dot com*
