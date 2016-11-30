@@ -95,7 +95,7 @@ def usage():
 import getopt
 
 if __name__ == "__main__":
-    ifileA = os.path.join(app_settings.APP_DIR, 'sample.sav')
+    ifileA = os.path.join(app_settings.APP_DIR, 'savnw.sav')
     ifileB = os.path.join(app_settings.APP_DIR, 'savcnv.sav')
     write_py = True
     write_excel = True

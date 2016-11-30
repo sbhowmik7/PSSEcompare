@@ -23,7 +23,8 @@ except ImportError:
     import app_settings
 
 # import 3rd party packages
-import openpyxl
+#import openpyxl
+import xlsxwriter
 
 # import Grid compare modules.
 import compare
@@ -287,31 +288,21 @@ def make_csv(fid):
 
 # ============== Excel Writer ============
 
-def excel_write_rows(sheet, data_rows):
+def excel_write_rows(sheet, data_rows,currow =0):
     """Writes the data stored in 'data_rows' to an excel spreadsheet 'sheet'.
-
-    Returns the number of lines written.
     """
+    rwcnt =0
+    for rwcnt,row in enumerate(data_rows,start=1):
+        sheet.write_row(currow+rwcnt-1,0,row)
+    return rwcnt
 
-    # If data_rows is empty, the loop won't run and 'i' is undefined. This
-    # makes the fn return 0 lines in that case.
-    for row in data_rows:
-        sheet.append(row)
-
-def write_excel_sheet_header(sheet, e):
+def write_excel_sheet_header(sheet, e, currow =0):
     """Returns a tuple with the names to be used as the column headers."""
     a_write_fn = e.write_fns.values()[0]
     headers = a_write_fn.primaries.keys()
 
     headers += ('option', 'case A', 'case B')
-
-    sheet.append(headers)
-    # letters = ['a','b','c','d','e','f','g','h','i','j','k','m','n','o']
-    # for cell, header_val in zip(
-    #         sheet.range('A1:%s1' % letters[len(headers)-1])[0],
-    #         headers):
-    #     cell.value = header_val
-    #     cell.style.font.bold = True
+    sheet.write_row(currow,0,headers)
 
 def construct_data_format_fn(e, action):
     """Returns a function for converting a row from the database into a row to
@@ -392,7 +383,7 @@ def construct_data_format_fn(e, action):
 
 def make_excel(filename):
     """Write an excel spreadsheet to fid."""
-    wb = openpyxl.Workbook(write_only=True)
+    wb = xlsxwriter.Workbook(filename)
 
     con = sqlite3.connect(app_settings.COMPARE_DB)
     con.text_factory = str
@@ -440,38 +431,38 @@ def make_excel(filename):
 
         if del_count or new_count or comp_count:
             # There are changes so lets make a worksheet.
-            e_sheet = wb.create_sheet(title=sheet_name)
+            e_sheet = wb.add_worksheet(sheet_name)
             sheets[sheet_name] = e_sheet
+
 
             # write the headers on the 0th line.
             write_excel_sheet_header(e_sheet, e)
-
+            rwcnt = 1
             # --- Write removed data
             del_rows = starmap(construct_data_format_fn(e,'removed'),
                     con.execute(del_sql))
-            excel_write_rows(e_sheet, del_rows)
+            rwcnt += excel_write_rows(e_sheet, del_rows,rwcnt)
 
             # --- Write added data
             new_rows = starmap(construct_data_format_fn(e,'added'),
                     con.execute(new_sql))
-            excel_write_rows(e_sheet, new_rows)
+            rwcnt += excel_write_rows(e_sheet, new_rows,rwcnt)
 
             # --- Write changed data
             comp_rows = starmap(construct_data_format_fn(e,'changed'),
                     con.execute(comp_sql))
-            excel_write_rows(e_sheet, comp_rows)
+            rwcnt += excel_write_rows(e_sheet, comp_rows,rwcnt)
 
     if not sheets:
         # there are no changes between the 2 files.
-        sheet = wb.create_sheet(title='Info')
-        sheet.append(['No changes found between the two files '
-                'for the elements that were checked.'])
+        sheet = wb.add_worksheet('Info')
+        sheet.write(0,0,'No changes found between the two files for the elements that were checked.')
 
-        sheet.append(['The following network types were checked:'])
-        for network_type in sheetorder:
-            sheet.append([elem_to_sheet_name[network_type]])
+        sheet.write(1,0,['The following network types were checked:'])
+        for i,network_type in enumerate(sheetorder):
+            sheet.write_row(2+i,0,elem_to_sheet_name[network_type])
 
     # Remove the default sheet created with the workbook.
-    wb.remove_sheet(wb.worksheets[0])
-    wb.save(filename)
+    #wb.remove_sheet(wb.worksheets[0])
+    wb.close()
     return True

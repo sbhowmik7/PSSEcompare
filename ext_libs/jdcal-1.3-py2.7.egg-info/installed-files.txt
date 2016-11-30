@@ -1,7 +1,0 @@
-..\jdcal.py
-..\jdcal.pyc
-.\
-dependency_links.txt
-PKG-INFO
-SOURCES.txt
-top_level.txt
