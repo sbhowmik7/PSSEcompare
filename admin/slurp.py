@@ -128,7 +128,7 @@ def slurp(filename,case_letter = None):
     if case_letter:
         try:
             slurp_single_case(filename,case_letter)
-        except err:
+        except Exception as err:
             print('File read Error: ' + str(err))
             raise
 
