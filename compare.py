@@ -47,7 +47,7 @@ def unique_elems_by_type(table):
     for e in elements.values():
         params['unique_opt'] = e.writables.keys()[0]
         request = comp_db.execute("""SELECT node, type from %(table)s
-                                    where 
+                                    where
                                     option='%(unique_opt)s'""" % params)
         results = request.fetchmany()
         while results:
@@ -137,7 +137,7 @@ def compare(comp_con, slurp_con):
     add_added_elems_to_db(slurp_con, comp_con)
     add_removed_elems_to_db(slurp_con, comp_con)
 
-def get_except_nodes(slurp_con, params, unique_opt):
+def get_except_nodes(slurp_con, params):
     # Get except nodes
     sql_exec = """SELECT s.node, s.type, s.option, s.value
                   FROM slurp%(keep_elems_case)s s
@@ -153,15 +153,10 @@ def add_added_elems_to_db(slurp_con, comp_con):
     here.
     """
     params = {'keep_elems_case':'B', 'except_case':'A'}
+    nodes = get_except_nodes(slurp_con, params)
 
-    for e in elements.values():
-        # get the first writable variable name (as this is a primary param, it
-        # will always be the same and present.)
-        params['elem_name'] = e.elem_name
-        nodes = get_except_nodes(slurp_con, params, e.writables.keys()[0])
-        insert_new = "INSERT INTO new values (?, ?, ?, ?)"
-        comp_con.executemany(insert_new, nodes)
-
+    insert_new = "INSERT INTO new values (?, ?, ?, ?)"
+    comp_con.executemany(insert_new, nodes)
     comp_con.commit()
 
 def add_removed_elems_to_db(slurp_con, comp_con):
@@ -170,15 +165,10 @@ def add_removed_elems_to_db(slurp_con, comp_con):
     here.
     """
     params = {'keep_elems_case':'A', 'except_case':'B'}
+    nodes = get_except_nodes(slurp_con, params)
 
-    for e in elements.values():
-        # get the first writable variable name (as this is a primary param, it
-        # will always be the same and present.)
-        nodes = get_except_nodes(slurp_con, params, e.writables.keys()[0])
-        params['elem_name'] = e.elem_name
-        sql_insert = "INSERT INTO removed values (?, ?, ?, ?)"
-        comp_con.executemany(sql_insert, nodes)
-
+    sql_insert = "INSERT INTO removed values (?, ?, ?, ?)"
+    comp_con.executemany(sql_insert, nodes)
     comp_con.commit()
 
 
@@ -195,7 +185,7 @@ def do_compare():
     comp_con.execute("DELETE from removed")
     comp_con.commit()
 
-    print "\nStarting comparison between the 2 files"
+    print "Starting comparison between the 2 files"
 
     try:
         compare(comp_con, slurp_con)
